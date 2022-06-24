@@ -1,6 +1,6 @@
 Scriptname SBActivatorScript extends ObjectReference
 
-ObjectReference Property stoneBook Auto
+SBQuestScript Property SBQuest Auto
 String Property stoneName Auto
 
 ; Pass self ref to book to update it
