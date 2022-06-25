@@ -1,39 +1,52 @@
-Scriptname SBBookScript extends Quest
+Scriptname SBQuestScript extends Quest
 
 powerShrineScript Property realStone Auto
 
 bool isSorted = true
-string[] validStones;
-UIListMenu stoneMsgBox;
+bool updating = false
+string[] validStones
+int arrSize
+UIListMenu stoneMsgBox
 
-
+; Init sotne array, fill it with warrior, thief and mage by default
 Event OnInit()
-  stoneMsgBox = UIExtensions.GetMenu("UIListMenu") as UIListMenu
-  validStones = new string[3]
+  validStones = new string[13]
   validStones[0] = "The Mage"
   validStones[1] = "The Thief"
   validStones[2] = "The Warrior"
+
+  arrSize = 3
+
 EndEvent
 
-Function updateStoneList(ObjectReference stone)
-  int i = 0
-  string stoneName = (stone as SBActivatorScript).stoneName
-  while (i < validStones.Length)
-    if validStones[i] == stoneName
-      return
-    endif
-    i += 1
-  endwhile
+; Called from SBActivatorScript attached to each standing stone
+Function updateStoneList(string stoneName)
+  if !updating
+    updating = true
 
-  validStones = PapyrusUtil.PushString(validStones, stoneName)
+    int i = 0
+    while (i < arrSize)
+      if (validStones[i] == stoneName)
+        return
+      endif
+      i += 1
+    endwhile
 
-  isSorted = false
+    validStones[arrSize] = stoneName
+    arrSize += 1
+
+    isSorted = false
+    updating = false
+  endif
 EndFunction
 
+; Using ListMenu from UIExtensions, don't like pagination
 int Function openMenu()
+  stoneMsgBox = UIExtensions.GetMenu("UIListMenu") as UIListMenu
   stoneMsgBox.ResetMenu()
+
   int i = 0
-  while i < validStones.Length
+  while i < arrSize
     stoneMsgBox.AddEntryItem(validStones[i])
     i += 1
   endWhile
@@ -41,6 +54,10 @@ int Function openMenu()
   stoneMsgBox.OpenMenu()
   return stoneMsgBox.GetResultInt()
 EndFunction
+
+; Tradeoff between readability, compatibility, 3rd library usage etc.
+; General idea - I am making one (Steed) stone persistent and change it's bool props
+; after changing the stone, steed's bool props' changes are reverted back
 
 Function switchPower(int index)
   string selected = validStones[index]
@@ -107,7 +124,7 @@ Function switchPower(int index)
     realStone.removeSign()
     realStone.addSign()
     realStone.bTower = false
-  else
+  elseif selected == "The Warrior"
     realStone.bWarrior = true
     realStone.removeSign()
     realStone.addSign()
@@ -119,7 +136,7 @@ EndFunction
 
 Function readBook()
   if !isSorted
-    PapyrusUtil.SortStringArray(validStones)
+    SBUtilsScript.SortStringArrayHelper(validStones, arrSize)
     isSorted = true
   endif
 
